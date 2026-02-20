@@ -3,106 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recepção - Magno</title>
+    <title>Abertura de OS - Magno</title>
     <style>
-        :root {
-            --pendente: #fff3cd; --texto-pendente: #856404;
-            --concluido: #d4edda; --texto-concluido: #155724;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { display: flex; gap: 20px; width: 100%; max-width: 1100px; flex-wrap: wrap; }
-        .coluna { flex: 1; min-width: 320px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h1 { color: #333; margin-bottom: 30px; }
-        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 1.2em; }
-        input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-abrir { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        
-        .card-os { padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 6px solid; position: relative; }
-        .os-pendente { background: var(--pendente); color: var(--texto-pendente); border-color: #ffc107; }
-        .os-concluida { background: var(--concluido); color: var(--texto-concluido); border-color: #28a745; }
-        
-        .obs-tecnica { background: rgba(255,255,255,0.5); padding: 10px; border-radius: 5px; margin-top: 10px; border: 1px dashed #999; font-size: 0.9em; }
-        .btn-del { position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; color: #cc0000; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; color: #555; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .full { grid-column: span 2; }
+        button { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
+        .card-os { background: #fffde7; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 5px solid #fbc02d; }
     </style>
 </head>
 <body>
 
-    <h1>📋 Recepção - Controle de Ordens</h1>
-
-    <div class="container">
-        <div class="coluna">
-            <h2>Abrir Nova OS</h2>
-            <input type="text" id="cliente" placeholder="Nome do Cliente / Veículo">
-            <textarea id="problema" rows="3" placeholder="Relato do cliente..."></textarea>
-            <button class="btn-abrir" id="btnSalvar">GERAR ORDEM DE SERVIÇO</button>
+<div class="container">
+    <h2>Abertura de Ordem de Serviço</h2>
+    <div class="grid">
+        <div>
+            <label>Setor:</label>
+            <input type="text" id="setor">
         </div>
-
-        <div class="coluna">
-            <h2>Status da Oficina</h2>
-            <div id="lista-os">Conectando...</div>
+        <div>
+            <label>Solicitante:</label>
+            <input type="text" id="solicitante">
+        </div>
+        <div class="full">
+            <label>Equipamento/Máquina:</label>
+            <input type="text" id="equipamento">
+        </div>
+        <div>
+            <label>Máquina Parada?</label>
+            <select id="parada">
+                <option value="Não">Não</option>
+                <option value="Sim">Sim</option>
+            </select>
+        </div>
+        <div>
+            <label>Tipo de Serviço:</label>
+            <select id="tipoServico">
+                <option value="Predial">Predial</option>
+                <option value="Elétrica">Elétrica</option>
+                <option value="Melhoria">Melhoria</option>
+                <option value="Corretiva">Corretiva</option>
+                <option value="Preventiva">Preventiva</option>
+            </select>
+        </div>
+        <div class="full">
+            <label>Motivo/Descrição do Problema:</label>
+            <textarea id="motivo" rows="3"></textarea>
         </div>
     </div>
+    <button id="btnEnviar">GERAR ORDEM DE SERVIÇO</button>
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <div id="monitoramento">
+        <h3>Ordens em Andamento</h3>
+        <div id="lista-os">Carregando...</div>
+    </div>
+</div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBUUadtzPAVUYsROQ87Vd7G96EkbQDniqc",
-            authDomain: "magno-10b0d.firebaseapp.com",
-            databaseURL: "https://magno-10b0d-default-rtdb.firebaseio.com",
-            projectId: "magno-10b0d",
-            storageBucket: "magno-10b0d.firebasestorage.app",
-            messagingSenderId: "455121182342",
-            appId: "1:455121182342:web:13ba1fc65fd95256c9fb07",
-            measurementId: "G-XNQGHWBLGC"
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBUUadtzPAVUYsROQ87Vd7G96EkbQDniqc",
+        authDomain: "magno-10b0d.firebaseapp.com",
+        databaseURL: "https://magno-10b0d-default-rtdb.firebaseio.com",
+        projectId: "magno-10b0d",
+        storageBucket: "magno-10b0d.firebasestorage.app",
+        messagingSenderId: "455121182342",
+        appId: "1:455121182342:web:13ba1fc65fd95256c9fb07"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    document.getElementById('btnEnviar').onclick = () => {
+        const dados = {
+            setor: document.getElementById('setor').value,
+            solicitante: document.getElementById('solicitante').value,
+            equipamento: document.getElementById('equipamento').value,
+            parada: document.getElementById('parada').value,
+            tipoServico: document.getElementById('tipoServico').value,
+            motivo: document.getElementById('motivo').value,
+            status: 'Aberto',
+            dataAbertura: new Date().toLocaleString('pt-BR')
         };
+        db.ref('ordens').push(dados);
+        alert("OS Enviada!");
+    };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        // SALVAR NOVA OS
-        document.getElementById('btnSalvar').onclick = () => {
-            const cliente = document.getElementById('cliente').value;
-            const problema = document.getElementById('problema').value;
-            if(!cliente || !problema) return alert("Preencha tudo!");
-
-            db.ref('ordens').push({
-                cliente, problema, status: 'Aberto', data: new Date().toLocaleString('pt-BR')
-            });
-
-            document.getElementById('cliente').value = '';
-            document.getElementById('problema').value = '';
-        };
-
-        // MONITORAR EM TEMPO REAL
-        db.ref('ordens').on('value', (snapshot) => {
-            const listaDiv = document.getElementById('lista-os');
-            listaDiv.innerHTML = '';
-            const dados = snapshot.val();
-
-            if(!dados) { listaDiv.innerHTML = "Nenhuma ordem no momento."; return; }
-
-            Object.keys(dados).reverse().forEach(id => {
-                const os = dados[id];
-                const statusClasse = os.status === 'Aberto' ? 'os-pendente' : 'os-concluida';
-                
-                const card = document.createElement('div');
-                card.className = `card-os ${statusClasse}`;
-                card.innerHTML = `
-                    <button class="btn-del" onclick="excluir('${id}')">X</button>
-                    <strong>👤 ${os.cliente}</strong><br>
-                    <small>Entrada: ${os.data}</small>
-                    <p><b>Problema:</b> ${os.problema}</p>
-                    ${os.status === 'Concluído' ? 
-                        `<div class="obs-tecnica"><b>✅ Relatório do Mecânico:</b><br>${os.observacao}</div>` : 
-                        `<i>⏳ Aguardando oficina...</i>`}
-                `;
-                listaDiv.appendChild(card);
-            });
-        });
-
-        window.excluir = (id) => { if(confirm("Apagar registro?")) db.ref('ordens/' + id).remove(); };
-    </script>
+    db.ref('ordens').on('value', (snap) => {
+        const lista = document.getElementById('lista-os');
+        lista.innerHTML = '';
+        const data = snap.val();
+        for(let id in data) {
+            const os = data[id];
+            lista.innerHTML += `<div class="card-os">
+                <b>Setor:</b> ${os.setor} | <b>Máquina:</b> ${os.equipamento}<br>
+                <b>Status:</b> ${os.status} ${os.status === 'Concluído' ? '✅' : '⏳'}
+            </div>`;
+        }
+    });
+</script>
 </body>
 </html>
