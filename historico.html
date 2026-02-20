@@ -5,37 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Histórico de Manutenção - Magno</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #eceff1; padding: 20px; }
-        .container { max-width: 1100px; margin: auto; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eceff1; margin: 0; padding: 0; }
+        
+        /* Barra de Navegação (Igual à Recepção) */
+        .navbar { background: #2c3e50; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .navbar h2 { margin: 0; font-size: 20px; }
+        .menu-links a { color: white; text-decoration: none; margin-left: 20px; font-weight: bold; background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 5px; transition: 0.3s; }
+        .menu-links a:hover { background: #3498db; }
+        .link-home { border: 1px solid #3498db; color: #3498db !important; background: white !important; }
+
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
         h1 { text-align: center; color: #2c3e50; }
         
-        /* Barra de Busca */
-        .busca-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; gap: 10px; }
-        #busca { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+        .busca-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        #busca { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
 
-        /* Tabela de Histórico */
-        .tabela-container { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; background: white; }
+        .tabela-container { background: white; border-radius: 10px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th { background: #2c3e50; color: white; padding: 15px; text-align: left; }
         td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #333; }
         tr:hover { background: #f1f1f1; }
         
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        .badge-tipo { background: #e3f2fd; color: #1976d2; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; background: #e3f2fd; color: #1976d2; }
+        .btn-ver { background: #607d8b; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         
-        .btn-ver { background: #607d8b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-        
-        /* Estilo para o modal (detalhes da OS) */
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
-        .fechar-modal { float: right; cursor: pointer; font-size: 24px; font-weight: bold; }
+        /* Modal */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; }
+        .fechar-modal { float: right; cursor: pointer; font-size: 28px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>📚 Histórico de Ordens de Serviço</h1>
+<div class="navbar">
+    <h2>📚 Histórico de Ordens</h2>
+    <div class="menu-links">
+        <a href="index.html" class="link-home">🏠 Voltar para Recepção</a>
+        <a href="mecanico.html">👨‍🔧 Painel Oficina</a>
+    </div>
+</div>
 
+<div class="container">
     <div class="busca-container">
         <input type="text" id="busca" placeholder="🔍 Pesquisar por Equipamento, Setor ou Executante..." onkeyup="filtrar()">
     </div>
@@ -52,8 +62,7 @@
                     <th>Ação</th>
                 </tr>
             </thead>
-            <tbody id="corpo-tabela">
-                </tbody>
+            <tbody id="corpo-tabela"></tbody>
         </table>
     </div>
 </div>
@@ -87,12 +96,10 @@
         corpo.innerHTML = '';
         const data = snap.val();
         todasOrdens = [];
-
         if(!data) return;
 
         Object.keys(data).reverse().forEach(id => {
             const os = data[id];
-            // No histórico, focamos no que está concluído
             if(os.status === 'Concluído') {
                 os.id = id;
                 todasOrdens.push(os);
@@ -108,7 +115,7 @@
             <td>${os.dataAbertura.split(' ')[0]}</td>
             <td><b>${os.equipamento}</b></td>
             <td>${os.setor}</td>
-            <td><span class="badge badge-tipo">${os.tipoServico}</span></td>
+            <td><span class="badge">${os.tipoServico}</span></td>
             <td>${os.executante || '-'}</td>
             <td><button class="btn-ver" onclick="verDetalhes('${os.id}')">👁️ Detalhes</button></td>
         `;
@@ -117,35 +124,29 @@
 
     function verDetalhes(id) {
         const os = todasOrdens.find(o => o.id === id);
-        const box = document.getElementById('detalhes-os');
-        box.innerHTML = `
-            <h2>Detalhes da OS</h2>
-            <p><b>Data:</b> ${os.dataAbertura}</p>
-            <p><b>Equipamento:</b> ${os.equipamento}</p>
-            <p><b>Setor:</b> ${os.setor} | <b>Solicitante:</b> ${os.solicitante}</p>
+        document.getElementById('detalhes-os').innerHTML = `
+            <h2 style="color:#2c3e50">Relatório de Manutenção</h2>
+            <p><b>Equipamento:</b> ${os.equipamento} | <b>Setor:</b> ${os.setor}</p>
+            <p><b>Abertura:</b> ${os.dataAbertura} por ${os.solicitante}</p>
             <hr>
-            <p><b>Motivo do Chamado:</b><br>${os.motivo}</p>
-            <p><b>Serviço Executado:</b><br>${os.servicoExecutado}</p>
-            <p><b>Materiais Usados:</b><br>${os.materialUtilizado}</p>
-            <p><b>Mecânico:</b> ${os.executante} (${os.horaInicio} às ${os.horaFim})</p>
+            <p><b>🚨 Motivo do Chamado:</b><br>${os.motivo}</p>
+            <p><b>🛠️ Serviço Executado:</b><br>${os.servicoExecutado}</p>
+            <p><b>📦 Materiais Utilizados:</b><br>${os.materialUtilizado}</p>
+            <hr>
+            <p><b>👨‍🔧 Executado por:</b> ${os.executante} (${os.horaInicio} às ${os.horaFim})</p>
         `;
         document.getElementById('modal').style.display = 'flex';
     }
 
     function fecharModal() { document.getElementById('modal').style.display = 'none'; }
-
     function filtrar() {
         const termo = document.getElementById('busca').value.toLowerCase();
-        const corpo = document.getElementById('corpo-tabela');
-        corpo.innerHTML = '';
-        
-        todasOrdens.forEach(os => {
-            if(os.equipamento.toLowerCase().includes(termo) || 
-               os.setor.toLowerCase().includes(termo) || 
-               os.executante.toLowerCase().includes(termo)) {
-                renderizarLinha(os);
-            }
-        });
+        document.getElementById('corpo-tabela').innerHTML = '';
+        todasOrdens.filter(os => 
+            os.equipamento.toLowerCase().includes(termo) || 
+            os.setor.toLowerCase().includes(termo) || 
+            os.executante.toLowerCase().includes(termo)
+        ).forEach(renderizarLinha);
     }
 </script>
 </body>
