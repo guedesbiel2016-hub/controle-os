@@ -3,28 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abertura e Monitoramento OS - Magno</title>
+    <title>Monitoramento e Impressão OS - Magno</title>
     <style>
+        /* Estilos para a tela */
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 20px;}
-        label { font-weight: bold; display: block; margin-bottom: 5px; color: #555; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         .full { grid-column: span 2; }
-        button#btnEnviar { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        button#btnEnviar { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
-        /* Estilo dos Cards no Monitoramento */
         .card-os { background: #fff; padding: 20px; border-radius: 8px; margin-top: 20px; border: 1px solid #ddd; border-left: 8px solid #fbc02d; position: relative; }
         .card-os.concluido { border-left-color: #28a745; background: #f9fff9; }
         
-        .status-badge { position: absolute; top: 15px; right: 15px; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .badge-aberto { background: #fff3cd; color: #856404; }
-        .badge-concluido { background: #d4edda; color: #155724; }
+        .detalhes-fechamento { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .obs-box { grid-column: span 2; background: #f0f0f0; padding: 10px; border-radius: 5px; }
 
-        .detalhes-fechamento { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em; }
-        .obs-box { grid-column: span 2; background: #eee; padding: 10px; border-radius: 5px; margin-top: 5px; }
-        .btn-excluir { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; float: right; margin-top: 10px;}
+        .btn-imprimir { background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        .btn-excluir { background: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; float: right; margin-top: 10px;}
+
+        /* ESTILO EXCLUSIVO PARA IMPRESSÃO (O que aparece no papel) */
+        @media print {
+            body * { visibility: hidden; }
+            .printable, .printable * { visibility: visible; }
+            .printable { 
+                position: absolute; left: 0; top: 0; width: 100%; 
+                border: 2px solid #000 !important; color: #000 !important; background: #fff !important;
+                padding: 20px; font-size: 14pt;
+            }
+            .btn-imprimir, .btn-excluir, #btnEnviar, h2, .grid, hr { display: none !important; }
+            .obs-box { background: #fff !important; border: 1px solid #000 !important; }
+        }
     </style>
 </head>
 <body>
@@ -37,15 +46,14 @@
         <div class="full"><label>Equipamento/Máquina:</label><input type="text" id="equipamento"></div>
         <div><label>Máquina Parada?</label><select id="parada"><option>Não</option><option>Sim</option></select></div>
         <div><label>Tipo de Serviço:</label><select id="tipoServico"><option>Predial</option><option>Elétrica</option><option>Melhoria</option><option>Corretiva</option><option>Preventiva</option></select></div>
-        <div class="full"><label>Motivo/Descrição do Problema:</label><textarea id="motivo" rows="2"></textarea></div>
+        <div class="full"><label>Motivo:</label><textarea id="motivo" rows="2"></textarea></div>
     </div>
     <button id="btnEnviar">GERAR ORDEM DE SERVIÇO</button>
 
-    <hr style="margin: 40px 0;">
-
+    <hr>
     <div id="monitoramento">
         <h2>📋 Painel de Acompanhamento</h2>
-        <div id="lista-os">Carregando ordens...</div>
+        <div id="lista-os">Carregando...</div>
     </div>
 </div>
 
@@ -65,59 +73,64 @@
     const db = firebase.database();
 
     document.getElementById('btnEnviar').onclick = () => {
-        const setor = document.getElementById('setor').value;
-        const equipamento = document.getElementById('equipamento').value;
-        if(!setor || !equipamento) return alert("Preencha Setor e Equipamento!");
-
         db.ref('ordens').push({
-            setor,
+            setor: document.getElementById('setor').value,
             solicitante: document.getElementById('solicitante').value,
-            equipamento,
+            equipamento: document.getElementById('equipamento').value,
             parada: document.getElementById('parada').value,
             tipoServico: document.getElementById('tipoServico').value,
             motivo: document.getElementById('motivo').value,
             status: 'Aberto',
             dataAbertura: new Date().toLocaleString('pt-BR')
         });
-        alert("OS Enviada com sucesso!");
+        alert("OS Gerada!");
     };
 
     db.ref('ordens').on('value', (snap) => {
         const lista = document.getElementById('lista-os');
         lista.innerHTML = '';
         const data = snap.val();
-        if(!data) { lista.innerHTML = "Nenhuma OS encontrada."; return; }
+        if(!data) return;
 
         Object.keys(data).reverse().forEach(id => {
             const os = data[id];
             const isConcluido = os.status === 'Concluído';
             
-            lista.innerHTML += `
-                <div class="card-os ${isConcluido ? 'concluido' : ''}">
-                    <span class="status-badge ${isConcluido ? 'badge-concluido' : 'badge-aberto'}">
-                        ${os.status.toUpperCase()}
-                    </span>
-                    
-                    <strong>📍 Setor:</strong> ${os.setor} | <strong>⚙️ Máquina:</strong> ${os.equipamento} <br>
-                    <small>📅 Aberta em: ${os.dataAbertura} por ${os.solicitante || 'Não informado'}</small>
-                    <p><b>Motivo:</b> ${os.motivo}</p>
+            // Criamos o card. Adicionamos a classe 'printable' ao card que queremos imprimir
+            const card = document.createElement('div');
+            card.className = `card-os ${isConcluido ? 'concluido' : ''}`;
+            card.id = `card-${id}`;
+            
+            card.innerHTML = `
+                <h3>ORDEM DE SERVIÇO - ${os.status.toUpperCase()}</h3>
+                <strong>📍 Setor:</strong> ${os.setor} | <strong>⚙️ Equipamento:</strong> ${os.equipamento} <br>
+                <small>📅 Aberta em: ${os.dataAbertura} | Solicitante: ${os.solicitante}</small>
+                <p><b>Motivo do Chamado:</b> ${os.motivo}</p>
 
-                    ${isConcluido ? `
-                        <div class="detalhes-fechamento">
-                            <div><b>👨‍🔧 Executante:</b> ${os.executante || '-'}</div>
-                            <div><b>⏰ Horário:</b> ${os.horaInicio || '00:00'} às ${os.horaFim || '00:00'}</div>
-                            <div class="obs-box"><b>🛠️ Serviço Realizado:</b><br> ${os.servicoExecutado || 'Não detalhado'}</div>
-                            <div class="obs-box"><b>📦 Materiais:</b><br> ${os.materialUtilizado || 'Nenhum'}</div>
-                        </div>
-                    ` : '<i>⏳ Aguardando execução do mecânico...</i>'}
-                    
-                    <button class="btn-excluir" onclick="excluirOS('${id}')">Apagar OS</button>
-                </div>
+                ${isConcluido ? `
+                    <div class="detalhes-fechamento">
+                        <div><b>👨‍🔧 Executante:</b> ${os.executante}</div>
+                        <div><b>⏰ Horário:</b> ${os.horaInicio} às ${os.horaFim}</div>
+                        <div class="obs-box"><b>🛠️ Serviço Executado:</b><br> ${os.servicoExecutado}</div>
+                        <div class="obs-box"><b>📦 Materiais:</b><br> ${os.materialUtilizado}</div>
+                    </div>
+                    <button class="btn-imprimir" onclick="imprimirOS('card-${id}')">🖨️ IMPRIMIR OS</button>
+                ` : '<i>⏳ Pendente na Oficina</i>'}
+                
+                <button class="btn-excluir" onclick="excluirOS('${id}')">Apagar</button>
             `;
+            lista.appendChild(card);
         });
     });
 
-    window.excluirOS = (id) => { if(confirm("Deseja remover este registro do histórico?")) db.ref('ordens/'+id).remove(); };
+    function imprimirOS(cardId) {
+        const card = document.getElementById(cardId);
+        card.classList.add('printable'); // Marca para o CSS de impressão
+        window.print();
+        card.classList.remove('printable'); // Remove após imprimir para não bagunçar a tela
+    }
+
+    window.excluirOS = (id) => { if(confirm("Remover?")) db.ref('ordens/'+id).remove(); };
 </script>
 </body>
 </html>
