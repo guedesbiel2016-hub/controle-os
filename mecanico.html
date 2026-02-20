@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Mecânico - Magno</title>
+    <style>
+        body { font-family: sans-serif; background: #2c3e50; color: white; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 600px; }
+        h1 { text-align: center; color: #ecf0f1; }
+        .card-os { background: #fff; color: #333; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 8px solid #f1c40f; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        strong { font-size: 1.2em; color: #2c3e50; }
+        p { margin: 10px 0; line-height: 1.5; }
+        textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-family: sans-serif; height: 80px; }
+        button { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        button:hover { background: #2ecc71; }
+        .data { font-size: 0.8em; color: #7f8c8d; display: block; margin-top: 5px; }
+        #lista-os { margin-top: 20px; }
+        .aviso-vazio { text-align: center; color: #bdc3c7; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>👨‍🔧 Área do Mecânico</h1>
+        <div id="lista-os">Carregando ordens pendentes...</div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBUUadtzPAVUYsROQ87Vd7G96EkbQDniqc",
+            authDomain: "magno-10b0d.firebaseapp.com",
+            databaseURL: "https://magno-10b0d-default-rtdb.firebaseio.com",
+            projectId: "magno-10b0d",
+            storageBucket: "magno-10b0d.firebasestorage.app",
+            messagingSenderId: "455121182342",
+            appId: "1:455121182342:web:13ba1fc65fd95256c9fb07",
+            measurementId: "G-XNQGHWBLGC"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // O SEGREDO: Escuta apenas o que NÃO está concluído
+        db.ref('ordens').on('value', (snapshot) => {
+            const listaDiv = document.getElementById('lista-os');
+            listaDiv.innerHTML = '';
+            const dados = snapshot.val();
+
+            if (!dados) {
+                listaDiv.innerHTML = '<div class="aviso-vazio">Nenhum serviço pendente. Bom descanso!</div>';
+                return;
+            }
+
+            let temOrdemAberta = false;
+
+            Object.keys(dados).forEach(id => {
+                const os = dados[id];
+                
+                // Só mostra para o mecânico o que estiver "Aberto"
+                if(os.status === 'Aberto') {
+                    temOrdemAberta = true;
+                    const card = document.createElement('div');
+                    card.className = 'card-os';
+                    card.innerHTML = `
+                        <strong>👤 ${os.cliente}</strong>
+                        <span class="data">Entrada: ${os.data}</span>
+                        <p><b>Defeito:</b> ${os.problema}</p>
+                        <hr>
+                        <label><b>Relatório Técnico:</b></label>
+                        <textarea id="obs-${id}" placeholder="O que foi feito no veículo/equipamento?"></textarea>
+                        <button onclick="finalizarServico('${id}')">CONCLUIR E DAR BAIXA</button>
+                    `;
+                    listaDiv.appendChild(card);
+                }
+            });
+
+            if(!temOrdemAberta) {
+                listaDiv.innerHTML = '<div class="aviso-vazio">Tudo pronto! Nenhuma ordem aberta.</div>';
+            }
+        });
+
+        window.finalizarServico = (id) => {
+            const obsTecnica = document.getElementById(`obs-${id}`).value;
+            
+            if(!obsTecnica) {
+                alert("Por favor, preencha o relatório técnico antes de finalizar.");
+                return;
+            }
+
+            db.ref('ordens/' + id).update({
+                status: 'Concluído',
+                observacao: obsTecnica,
+                dataFim: new Date().toLocaleString('pt-BR')
+            }).then(() => {
+                alert("Serviço finalizado com sucesso!");
+            });
+        };
+    </script>
+</body>
+</html>
