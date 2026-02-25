@@ -24,7 +24,7 @@
         .btn-imprimir { background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 10px; font-weight: bold; }
         .btn-excluir { background: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; float: right; margin-top: 10px;}
 
-        /* ESTILOS DE IMPRESSÃO (PÁGINA ÚNICA) */
+        /* ESTILOS DE IMPRESSÃO */
         .printable-os { display: none; }
         @media print {
             @page { size: auto; margin: 8mm; }
@@ -39,7 +39,7 @@
             .os-table td { border: 1px solid #000; padding: 4px 6px; font-size: 11px; vertical-align: middle; }
             .bg-gray { background-color: #e0e0e0 !important; -webkit-print-color-adjust: exact; font-weight: bold; white-space: nowrap; width: 1%; }
             .check-box { display: inline-block; width: 10px; height: 10px; border: 1px solid #000; text-align: center; line-height: 10px; font-size: 8px; margin-right: 2px; }
-            .sig-cell { height: 55px; vertical-align: bottom; text-align: center; border: 1px solid #000; }
+            .sig-cell { height: 70px; vertical-align: bottom; text-align: center; border: 1px solid #000; }
             .sig-line { border-top: 1px solid #000; margin: 0 10px; font-size: 9px; margin-bottom: 5px; }
         }
     </style>
@@ -125,8 +125,7 @@
                 <small>📅 ${os.dataAbertura} | 👤 Solicitante: ${os.solicitante || '---'}</small>
                 
                 <div style="background: #fdfdfd; padding: 10px; border: 1px solid #eee; margin-top:10px;">
-                    <b>Motivo:</b> ${os.motivo}<br>
-                    <small>🔧 Tipo: ${os.tipoServico} | 🛑 Parada: ${os.parada}</small>
+                    <b>Motivo:</b> ${os.motivo}
                 </div>
 
                 ${isConcluido ? `
@@ -134,7 +133,7 @@
                         <div><b>👨‍🔧 Executante:</b> ${os.executante || '---'}</div>
                         <div><b>⏰ Tempo:</b> ${os.horaInicio || '--'} às ${os.horaFim || '--'}</div>
                         <div class="obs-box-tela"><b>🛠️ Relatório:</b> ${os.servicoExecutado || 'Sem detalhes.'}</div>
-                        <div class="obs-box-tela"><b>📦 Material:</b> ${os.materialUtilizado || 'Nenhum material registrado.'}</div>
+                        <div class="obs-box-tela"><b>📦 Material:</b> ${os.materialUtilizado || 'Nenhum registrado.'}</div>
                     </div>
                 ` : ''}
                 
@@ -192,23 +191,22 @@
 
                 <table class="os-table" style="border-top:none;">
                     <tr><td class="bg-gray">MOTIVO / SERVIÇO SOLICITADO:</td></tr>
-                    <tr><td style="height: 40px; vertical-align:top;">${os.motivo}</td></tr>
+                    <tr><td style="height: 45px; vertical-align:top;">${os.motivo}</td></tr>
                     <tr><td class="bg-gray">SERVIÇO EXECUTADO:</td></tr>
-                    <tr><td style="height: 70px; vertical-align:top;">${os.servicoExecutado || ''}</td></tr>
+                    <tr><td style="height: 100px; vertical-align:top;">${os.servicoExecutado || ''}</td></tr>
                     <tr><td class="bg-gray">MATERIAL UTILIZADO:</td></tr>
-                    <tr><td style="height: 40px; vertical-align:top;">${os.materialUtilizado || ''}</td></tr>
+                    <tr><td style="height: 50px; vertical-align:top;">${os.materialUtilizado || ''}</td></tr>
                 </table>
 
                 <table class="os-table" style="border-top:none; table-layout:fixed;">
                     <tr>
-                        <td class="sig-cell"><div class="sig-line">Responsável pela Solicitação</div></td>
                         <td class="sig-cell"><div class="sig-line">Responsável pela Manutenção</div></td>
+                        <td class="sig-cell"><div class="sig-line">Responsável pela Liberação Produção</div></td>
                     </tr>
                     <tr>
-                        <td class="sig-cell"><div class="sig-line">Responsável pela Liberação Produção</div></td>
-                        <td style="height: 55px; vertical-align:top; text-align:left; padding: 5px;">
+                        <td colspan="2" style="height: 70px; vertical-align:top; text-align:left; padding: 5px;">
                             <strong>OBSERVAÇÕES:</strong>
-                            <div style="font-size: 9px; margin-top: 2px;">${os.observacoes || ''}</div>
+                            <div style="font-size: 10px; margin-top: 3px;">${os.observacoes || ''}</div>
                         </td>
                     </tr>
                 </table>
